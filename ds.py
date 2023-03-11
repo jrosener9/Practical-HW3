@@ -42,9 +42,13 @@ class Party:
         return Signature(self.num, sig)
 
     def send(self, party, msg, PKI, round_num):
-        should_send = True
+        should_send = True 
+
         if not self.is_honest:
-            #TODO: implement a dishonest send protocol. 
+            if random.randint(0, 1) == 0:
+                party.recieve(msg, PKI, round_num)
+            else:
+                return
 
         if should_send:
             if DEBUG: print("Sending", msg, "from", self.num, "to", party.num)
@@ -81,14 +85,30 @@ class Party:
 
         #TODO: Implement relay for honest party: If you recieved a message in the previous round, forward it to the specified party
         #TODO: Implement relay for dishonest party
+
+        if self.is_honest:
+            for msg in last_round_msgs:
+                sig = self.sign(msg.value)
+                msg.add_sig(sig)
+                msg.round = round_num
+                self.send(party, msg, PKI, round_num)
+        else:
+            for msg in last_round_msgs:
+                if random.randint(0, 1) == 0:
+                    sig = self.sign(msg.value)
+                    msg.add_sig(sig)
+                    msg.round = round_num
+                    self.send(party, msg, PKI, round_num)
+                
         
 
 
     def decide(self):
         #TODO: implement decision step for both honest and dishonest parties
         if self.is_honest:  
-
+            self.output = self.msgs[-1].value if len(set([msg.value for msg in self.msgs])) == 1 else DEFAULT
         else:
+            self.output = random.randint(0,1)
 
 
 def validity(general, v, parties):
